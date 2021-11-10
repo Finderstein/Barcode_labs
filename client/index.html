@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Barcode Generator with JavaScript</title>
+		<link
+			rel="stylesheet"
+			href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+			integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+			crossorigin="anonymous"
+		/>
+		<style type="text/css">
+			body {
+				background: #26a69a;
+			}
+			.codeContainer {
+				margin-top: 50px;
+				border-radius: 10px;
+				padding: 0;
+				background: #fff;
+				box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14),
+					0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+			}
+			.banner {
+				background: #e0dddd;
+				margin: 0;
+				padding: 15px;
+				border-top-left-radius: 10px;
+				border-top-right-radius: 10px;
+			}
+			.pd-15 {
+				padding: 15px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="d-flex justify-content-center">
+			<div class="col-md-4 codeContainer">
+				<h3 class="banner text-center">
+					UPC-A Barcode Generator with JavaScript
+				</h3>
+
+				<div class="pd-15">
+					<div class="form-group">
+						<label>Fill code (11 or 12 numbers if with check sum):</label>
+						<input
+							type="number"
+							name="barcodeStr"
+							id="barcodeStr"
+							class="form-control"
+							placeholder="012345678905"
+							value="012345678905"
+							min="11"
+							max="12"
+						/>
+					</div>
+
+					<input
+						type="button"
+						onclick="generateUPCBarcode()"
+						class="btn btn-success form-control"
+						value="Generate"
+					/>
+
+					<div class="d-flex justify-content-center text-danger mt-4">
+						<h5 id="error"></h5>
+					</div>
+
+					<div class="text-center">
+						<canvas id="barcode"></canvas>
+					</div>
+
+					<input
+						type="button"
+						onclick="downloadBarcode()"
+						class="btn btn-warning form-control"
+						value="Download"
+						id="download-btn"
+						style="display: none"
+					/>
+				</div>
+			</div>
+		</div>
+		<script
+			type="text/javascript"
+			src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.3/dist/JsBarcode.all.min.js"
+		></script>
+		<script type="text/javascript">
+			const groupA = {
+				0: '0001101',
+				1: '0011001',
+				2: '0010011',
+				3: '0111101',
+				4: '0100011',
+				5: '0110001',
+				6: '0101111',
+				7: '0111011',
+				8: '0110111',
+				9: '0001011'
+			};
+			const groupC = {
+				0: '1110010',
+				1: '1100110',
+				2: '1101100',
+				3: '1000010',
+				4: '1011100',
+				5: '1001110',
+				6: '1010000',
+				7: '1000100',
+				8: '1001000',
+				9: '1110100'
+			};
+			const start_stop = '101';
+			const middle = '01010';
+
+			const clearOutput = () => {
+				const canvas = document.getElementById('barcode');
+				const ctx = canvas.getContext('2d');
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+				document.getElementById('error').innerText = '';
+				document.getElementById('download-btn').style.display = 'none';
+			};
+
+			const getCheckSum = (barcodeStr) => {
+				let oddSum = 0;
+				let evenSum = 0;
+				[...barcodeStr].forEach((char, i) => {
+					if (i === 11) {
+						return;
+					}
+
+					i % 2 === 0
+						? (evenSum += parseInt(char))
+						: (oddSum += parseInt(char));
+				});
+
+				return (10 - ((oddSum * 3 + evenSum) % 10)) % 10;
+			};
+
+			const getBarcodeBinary = (barcodeStr, checkSum) => {
+				let barcodeBinary = [{ tall: true, binary: start_stop }];
+				[...barcodeStr].forEach((char, i) => {
+					if (i === 11) {
+						return;
+					}
+					if (i === 0) {
+						barcodeBinary.push({ tall: true, binary: groupA[char] });
+						return;
+					}
+					if (i === 6) {
+						barcodeBinary.push({ tall: true, binary: middle });
+					}
+
+					i < 6
+						? barcodeBinary.push({ tall: false, binary: groupA[char] })
+						: barcodeBinary.push({ tall: false, binary: groupC[char] });
+				});
+
+				if (barcodeStr.length === 12 && checkSum !== +barcodeStr.charAt(11)) {
+					return null;
+				}
+
+				barcodeBinary.push({ tall: true, binary: groupC[checkSum] });
+				barcodeBinary.push({ tall: true, binary: start_stop });
+
+				return barcodeBinary;
+			};
+
+			const drawBarcode = (barcodeBinary, barcodeStr, checkSum) => {
+				const canvas = document.getElementById('barcode');
+				const ctx = canvas.getContext('2d');
+
+				let counter = 0;
+				barcodeBinary.forEach((number) => {
+					const binary = number.binary;
+					const additionalHeight = number.tall ? 10 : 0;
+					[...binary].forEach((char) => {
+						if (char === '1') {
+							ctx.beginPath();
+							ctx.moveTo(55 + counter * 2, 30);
+							ctx.lineTo(55 + counter * 2, 100 + additionalHeight);
+							ctx.stroke();
+							ctx.beginPath();
+							ctx.moveTo(55 + counter * 2 + 1, 30);
+							ctx.lineTo(55 + counter * 2 + 1, 100 + additionalHeight);
+							ctx.stroke();
+						}
+						counter++;
+					});
+				});
+
+				ctx.font = '20px serif';
+				ctx.fillText(barcodeStr.slice(0, 1), 40, 120);
+				ctx.fillText(barcodeStr.slice(1, 6), 85, 120);
+				ctx.fillText(barcodeStr.slice(6, 11), 165, 120);
+				ctx.fillText(checkSum, 250, 120);
+				document.getElementById('download-btn').style.display = 'block';
+			};
+
+			const generateUPCBarcode = () => {
+				clearOutput();
+
+				const barcodeStr = document.getElementById('barcodeStr').value;
+				if (barcodeStr.length > 12 || barcodeStr.length < 11) {
+					document.getElementById('error').innerText =
+						'Length must be 11 or 12';
+					return;
+				}
+
+				const checkSum = getCheckSum(barcodeStr);
+				const barcodeBinary = getBarcodeBinary(barcodeStr, checkSum);
+				if (!barcodeBinary) {
+					document.getElementById('error').innerText =
+						'CheckSum value (last number) is not valid';
+					return;
+				}
+
+				drawBarcode(barcodeBinary, barcodeStr, checkSum);
+			};
+
+			const downloadBarcode = () => {
+				const canvas = document.getElementById('barcode');
+				const link = document.createElement('a');
+				link.download = 'upc.png';
+				link.href = canvas.toDataURL();
+				link.click();
+				link.delete;
+			};
+		</script>
+	</body>
+</html>
