@@ -1,9 +1,9 @@
-import BarcodeData from './brcd_data.model.js';
+import BarcodeData from '../models/brcd_data.model.js';
 import { StatusCodes } from 'http-status-codes';
 
-export function getBarcodeData(req, res) {
+export async function getBarcodeData(req, res) {
 	try {
-		const barcodeData = BarcodeData.getBarcodeData();
+		const barcodeData = await BarcodeData.getBarcodeData();
 		res.status(StatusCodes.OK).json({
 			barcodeData
 		});
@@ -14,11 +14,11 @@ export function getBarcodeData(req, res) {
 	}
 }
 
-export function postBarcodeData(req, res) {
+export async function postBarcodeData(req, res) {
 	const { types, countries } = req.body;
 
 	try {
-		BarcodeData.rewrite(new BarcodeData(types, countries));
+		await BarcodeData.rewrite(new BarcodeData(types, countries));
 		res
 			.status(StatusCodes.OK)
 			.json({ message: 'Successfully saved barcode data to database' });

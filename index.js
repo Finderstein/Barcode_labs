@@ -3,7 +3,10 @@ import morgan from 'morgan';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import BarcodeDataRouter from './brcd_data.routes.js';
+import path from 'path';
+import mustache from 'mustache-express';
+import BarcodeDataRouter from './routes/brcd_data.routes.js';
+import BarcodeData from './models/brcd_data.model.js';
 
 dotenv.config();
 
@@ -11,10 +14,28 @@ const app = express();
 app.use(express.json());
 app.use(morgan('combined'));
 app.use(cors());
+app.use(express.static('public'));
+
+const __dirname = path.resolve();
+const viewsDir = path.join(__dirname, 'views');
+app.engine('mst', mustache(path.join(viewsDir, 'partials')));
+app.set('views', viewsDir);
+app.set('view engine', 'mst');
 
 // simple route
-app.get('/', (req, res) => {
-	res.json({ message: 'Welcome to my games finder.' });
+app.get('/', async (req, res) => {
+	const barcodeData = await BarcodeData.getBarcodeData();
+	let typeCounter = 0;
+	let countryCounter = 0;
+	res.render('index', {
+		barcodeData,
+		typeIndex: function () {
+			return typeCounter++;
+		},
+		countryIndex: function () {
+			return countryCounter++;
+		}
+	});
 });
 
 // routes

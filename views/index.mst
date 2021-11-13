@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Barcode Generator with JavaScript</title>
+		<link
+			rel="stylesheet"
+			href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+			integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+			crossorigin="anonymous"
+		/>
+		<script
+			src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+			integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+			crossorigin="anonymous"
+		></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+			integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+			crossorigin="anonymous"
+		></script>
+		<script
+			src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+			integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+			crossorigin="anonymous"
+		></script>
+		<style type="text/css">
+			body {
+				background: #26a69a;
+			}
+			.codeContainer {
+				padding: 0;
+				background: #fff;
+			}
+			.banner {
+				background: #e0dddd;
+				border-top-left-radius: 10px;
+				border-top-right-radius: 10px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="d-flex flex-column justify-content-center p-3">
+			<h1 class="banner text-center p-2 m-0">
+				UPC-A Barcode Encoder and Decoder with JavaScript
+			</h1>
+			<div class="d-flex">
+				<div class="col-12 col-md-6 p-3 border codeContainer">
+					<h3>Encode</h3>
+					<nav>
+						<div class="nav nav-tabs" id="nav-encode-tab" role="tablist">
+							<a
+								class="nav-item nav-link active"
+								id="nav-encode-text-tab"
+								data-toggle="tab"
+								href="#nav-encode-text"
+								role="tab"
+								aria-controls="nav-encode-text"
+								aria-selected="true"
+								>Text</a
+							>
+							<a
+								class="nav-item nav-link"
+								id="nav-encode-product-tab"
+								data-toggle="tab"
+								href="#nav-encode-product"
+								role="tab"
+								aria-controls="nav-encode-product"
+								aria-selected="false"
+								>Product</a
+							>
+						</div>
+					</nav>
+					<div class="tab-content" id="nav-encode-tabContent">
+						<div
+							class="tab-pane fade show active"
+							id="nav-encode-text"
+							role="tabpanel"
+							aria-labelledby="nav-encode-text-tab"
+						>
+							<div class="form-group mt-3">
+								<label>Fill code (11 or 12 numbers if with check sum):</label>
+								<input
+									type="number"
+									name="encode-str"
+									id="encode-str"
+									class="form-control"
+									placeholder="012345678905"
+									value="012345678905"
+									min="11"
+									max="12"
+								/>
+							</div>
+							<input
+								type="button"
+								onclick="encodeFromString()"
+								class="btn btn-success form-control"
+								value="Encode"
+							/>
+						</div>
+						<div
+							class="tab-pane fade"
+							id="nav-encode-product"
+							role="tabpanel"
+							aria-labelledby="nav-encode-product-tab"
+						>
+							<h5 class="mt-4">Select product information:</h5>
+
+							<div class="d-flex">
+								<div class="col-6">
+									<label class="mt-2">Product type:</label>
+									<select class="custom-select" id="type">
+										{{#barcodeData.types}}
+										<option value="{{ typeIndex }}">{{.}}</option>
+										{{/barcodeData.types}}
+									</select>
+								</div>
+								<div class="col-6">
+									<label class="mt-2">Shipping country:</label>
+									<select class="custom-select" id="country">
+										{{#barcodeData.countries}}
+										<option value="{{ countryIndex }}">{{.}}</option>
+										{{/barcodeData.countries}}
+									</select>
+								</div>
+							</div>
+
+							<div class="d-flex">
+								<div class="col-6">
+									<label class="mt-2">Pick color:</label>
+									<input
+										class="w-100"
+										type="color"
+										id="color"
+										value="#0000ff"
+									/>
+								</div>
+								<div class="col-6">
+									<label class="mt-2">Price (from 1 to 100):</label>
+									<input
+										class="w-100"
+										type="number"
+										name="price"
+										id="price"
+										max="100"
+										min="1"
+									/>
+								</div>
+							</div>
+							<input
+								type="button"
+								onclick="encodeFromInputs()"
+								class="btn btn-success form-control mt-3"
+								value="Encode"
+							/>
+						</div>
+					</div>
+
+					<div class="d-flex justify-content-center text-danger mt-4">
+						<h5 id="encode-error"></h5>
+					</div>
+
+					<div id="encode-result" style="display: none">
+						<div>
+							<label>Binary representation of barcode:</label>
+							<textarea
+								class="w-100"
+								name="encode-binary"
+								id="encode-binary"
+								readonly
+							></textarea>
+						</div>
+
+						<div>
+							<label class="mt-4">Barcode image:</label>
+							<div class="text-center mt-4">
+								<canvas id="encode-barcode" width="220" height="150"></canvas>
+							</div>
+						</div>
+
+						<input
+							type="button"
+							onclick="downloadBarcode()"
+							class="btn btn-warning form-control"
+							value="Download file"
+							id="download-btn"
+						/>
+					</div>
+				</div>
+				<div class="col-12 col-md-6 p-3 border codeContainer">
+					<h3>Decode</h3>
+					<nav>
+						<div class="nav nav-tabs" id="nav-decode-tab" role="tablist">
+							<a
+								class="nav-item nav-link active"
+								id="nav-decode-text-tab"
+								data-toggle="tab"
+								href="#nav-decode-text"
+								role="tab"
+								aria-controls="nav-decode-text"
+								aria-selected="true"
+								>Text</a
+							>
+							<a
+								class="nav-item nav-link"
+								id="nav-decode-image-tab"
+								data-toggle="tab"
+								href="#nav-decode-image"
+								role="tab"
+								aria-controls="nav-decode-image"
+								aria-selected="false"
+								>Image</a
+							>
+						</div>
+					</nav>
+					<div class="tab-content" id="nav-decode-tabContent">
+						<div
+							class="tab-pane fade show active"
+							id="nav-decode-text"
+							role="tabpanel"
+							aria-labelledby="nav-decode-text-tab"
+						>
+							<label class="mt-3">Binary representation of barcode:</label>
+							<textarea
+								class="w-100"
+								name="decode-binary"
+								id="decode-binary"
+							></textarea>
+							<input
+								type="button"
+								onclick="decodeFromString()"
+								class="btn btn-success form-control mt-2"
+								value="Decode"
+							/>
+						</div>
+						<div
+							class="tab-pane fade"
+							id="nav-decode-image"
+							role="tabpanel"
+							aria-labelledby="nav-decode-image-tab"
+						>
+							<label class="mt-3">PNG image of barcode:</label>
+							<input
+								type="file"
+								name="decode-file"
+								id="decode-file"
+								accept=".jpg, .jpeg, .png"
+							/>
+
+							<input
+								type="button"
+								onclick="decodeFromImage()"
+								class="btn btn-success form-control mt-2"
+								value="Decode"
+							/>
+						</div>
+					</div>
+
+					<div class="d-flex justify-content-center text-danger mt-4">
+						<h5 id="decode-error"></h5>
+					</div>
+
+					<div id="decode-result" style="display: none">
+						<div>
+							<label>String representation of barcode:</label>
+							<input
+								type="text"
+								class="w-100"
+								name="decode-str"
+								id="decode-str"
+								readonly
+							/>
+						</div>
+						<div class="mt-2">
+							<label>Barcode image:</label>
+							<div class="text-center mt-4">
+								<canvas id="decode-barcode" width="220" height="150"></canvas>
+							</div>
+						</div>
+
+						<div class="mt-2">
+							<h5>Product information:</h5>
+
+							<div class="d-flex">
+								<div class="col-6">
+									<label class="mt-2">Product type:</label>
+									<input
+										class="w-100"
+										type="text"
+										name="decoded-type"
+										id="decoded-type"
+										readonly
+									/>
+								</div>
+								<div class="col-6">
+									<label class="mt-2">Shipping country:</label>
+									<input
+										class="w-100"
+										type="text"
+										name="decoded-country"
+										id="decoded-country"
+										readonly
+									/>
+								</div>
+							</div>
+
+							<div class="d-flex">
+								<div class="col-6">
+									<label class="mt-2">Color:</label>
+									<input
+										class="w-100"
+										type="color"
+										name="decoded-color"
+										id="decoded-color"
+										disabled
+									/>
+								</div>
+								<div class="col-6">
+									<label class="mt-2">Price:</label>
+									<input
+										class="w-100"
+										type="number"
+										name="decoded-price"
+										id="decoded-price"
+										readonly
+									/>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script
+			type="text/javascript"
+			src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.3/dist/JsBarcode.all.min.js"
+		></script>
+		<script src="/javascripts/utilities.js"></script>
+		<script src="/javascripts/encode.js"></script>
+		<script src="/javascripts/decode.js"></script>
+	</body>
+</html>
