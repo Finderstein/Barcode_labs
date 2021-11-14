@@ -78,7 +78,7 @@ const getBarcodeStrokesArr = (barcodeStr) => {
 
 const drawBarcode = (barcodeBinary, barcodeStr, ctx) => {
 	let counter = 0;
-	ctx.translate(0.5, 0.5);
+	ctx.translate(0.5, 0);
 	barcodeBinary.forEach((number) => {
 		const binary = number.binary;
 		const additionalHeight = number.tall ? 10 : 0;
@@ -101,7 +101,7 @@ const drawBarcode = (barcodeBinary, barcodeStr, ctx) => {
 	ctx.fillText(barcodeStr.slice(6, 11), 122, 120);
 	ctx.fillText(barcodeStr.slice(11, 12), 207, 120);
 
-	ctx.translate(-0.5, -0.5);
+	ctx.translate(-0.5, 0);
 };
 
 const clearOutput = (div, resStr, canvas, ctx, error) => {
