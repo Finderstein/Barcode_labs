@@ -2,6 +2,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-extra-parens */
 /* eslint-disable no-magic-numbers */
+
 const groupA = {
 	0: '0001101',
 	1: '0011001',
@@ -30,6 +31,25 @@ const groupC = {
 const silence = '0000000';
 const start_stop = '101';
 const middle = '01010';
+
+const hexToRgb = (hex) =>
+	hex
+		.replace(
+			/^#?([a-f\d])([a-f\d])([a-f\d])$/i,
+			(m, r, g, b) => '#' + r + r + g + g + b + b
+		)
+		.substring(1)
+		.match(/.{2}/g)
+		.map((x) => parseInt(x, 16));
+
+const rgbToHex = (r, g, b) =>
+	'#' +
+	[r, g, b]
+		.map((x) => {
+			const hex = x.toString(16);
+			return hex.length === 1 ? '0' + hex : hex;
+		})
+		.join('');
 
 const getCheckSum = (barcodeStr) => {
 	let oddSum = 0;

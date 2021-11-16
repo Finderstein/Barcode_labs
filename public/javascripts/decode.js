@@ -2,6 +2,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-extra-parens */
 /* eslint-disable no-magic-numbers */
+
 const decodeCanvas = document.getElementById('decode-barcode');
 const decodeCtx = decodeCanvas.getContext('2d');
 
@@ -114,15 +115,6 @@ const decodeUPCBarcode = async (binaryArr) => {
 	drawBarcode(barcodeStrokesArr, barcodeStr, decodeCtx);
 	manageDecodeOutput(barcodeStr, productData);
 };
-
-const rgbToHex = (r, g, b) =>
-	'#' +
-	[r, g, b]
-		.map((x) => {
-			const hex = x.toString(16);
-			return hex.length === 1 ? '0' + hex : hex;
-		})
-		.join('');
 
 const manageDecodeOutput = (barcodeStr, productData) => {
 	decodeStr.value = barcodeStr;
